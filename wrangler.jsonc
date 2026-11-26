@@ -1,0 +1,13 @@
+{
+  "name": "latam-ai-safety-map",
+  "compatibility_date": "2026-11-23",
+  "assets": {
+    "directory": "./public"
+  },
+  "routes": [
+    { "pattern": "map.chais.cl", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,721 @@
+<title>LatAm AI Safety Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&display=swap">
+<style>
+/* Layout: one column; framed "ocean" map panel up top, filterable card directory below. */
+:root {
+  --bg: #f9f9f7;
+  --surface: #fcfcfb;
+  --ocean: #dce7ea;
+  --land: #efede4;
+  --land-active: #e6e2d2;
+  --coast: #b5c4c9;
+  --fg: #0b0b0b;
+  --fg-2: #52514e;
+  --muted: #898781;
+  --hairline: #e1e0d9;
+  --ring: rgba(11,11,11,0.10);
+  --accent: #1c5cab;
+  --cat-research: #2a78d6;
+  --cat-government: #eb6834;
+  --cat-policy: #1baf7a;
+  --cat-training: #eda100;
+  --cat-community: #e87ba4;
+  --cat-career: #008300;
+  --cat-media: #6250d6;
+  --display: "Archivo Black", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d0d0d;
+    --surface: #1a1a19;
+    --ocean: #10191c;
+    --land: #242423;
+    --land-active: #2e2d28;
+    --coast: #39464a;
+    --fg: #f0efec;
+    --fg-2: #c3c2b7;
+    --muted: #898781;
+    --hairline: #2c2c2a;
+    --ring: rgba(255,255,255,0.10);
+    --accent: #6da7ec;
+    --cat-research: #3987e5;
+    --cat-government: #d95926;
+    --cat-policy: #199e70;
+    --cat-training: #c98500;
+    --cat-community: #d55181;
+    --cat-career: #0ca30c;
+    --cat-media: #9085e9;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d0d0d;
+  --surface: #1a1a19;
+  --ocean: #10191c;
+  --land: #242423;
+  --land-active: #2e2d28;
+  --coast: #39464a;
+  --fg: #f0efec;
+  --fg-2: #c3c2b7;
+  --muted: #898781;
+  --hairline: #2c2c2a;
+  --ring: rgba(255,255,255,0.10);
+  --accent: #6da7ec;
+  --cat-research: #3987e5;
+  --cat-government: #d95926;
+  --cat-policy: #199e70;
+  --cat-training: #c98500;
+  --cat-community: #d55181;
+  --cat-career: #0ca30c;
+  --cat-media: #9085e9;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.wrap {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 56px;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  margin: 0 0 10px;
+}
+h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(34px, 6vw, 54px);
+  line-height: 1.04;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.intro {
+  max-width: 62ch;
+  color: var(--fg-2);
+  margin: 0 0 6px;
+}
+.statline {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 10px 0 0;
+}
+.statline strong { color: var(--fg); font-weight: 600; }
+
+/* Controls */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 26px 0 14px;
+}
+.controls input[type="search"], .controls select {
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.controls input[type="search"] { width: 200px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font: inherit;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+.chip .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.chip[aria-pressed="true"] {
+  border-color: var(--fg);
+  color: var(--fg);
+  font-weight: 600;
+}
+.chip .n { color: var(--muted); font-size: 12px; }
+.chip.wide-toggle { border-style: dashed; }
+
+/* Map panel */
+.map-panel {
+  position: relative;
+  background: var(--ocean);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.map-panel svg { display: block; width: 100%; height: auto; }
+.country { fill: var(--land); stroke: var(--coast); stroke-width: 0.6; }
+.country.active { fill: var(--land-active); }
+.pin {
+  stroke: var(--surface);
+  stroke-width: 1.6;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.pin.dim { opacity: 0.15; pointer-events: none; }
+.pin.inactive-org { fill-opacity: 0.45; stroke-dasharray: 2 1.5; }
+.city-label {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  fill: var(--fg-2);
+  paint-order: stroke;
+  stroke: var(--ocean);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.cat-research { fill: var(--cat-research); }
+.cat-government { fill: var(--cat-government); }
+.cat-policy { fill: var(--cat-policy); }
+.cat-training { fill: var(--cat-training); }
+.cat-community { fill: var(--cat-community); }
+.cat-career { fill: var(--cat-career); }
+.cat-media { fill: var(--cat-media); }
+.bg-research { background: var(--cat-research); }
+.bg-government { background: var(--cat-government); }
+.bg-policy { background: var(--cat-policy); }
+.bg-training { background: var(--cat-training); }
+.bg-community { background: var(--cat-community); }
+.bg-career { background: var(--cat-career); }
+.bg-media { background: var(--cat-media); }
+
+/* Regional tray: the "offshore" box for orgs with no single home city */
+.tray {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  max-width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 10px 12px 12px;
+}
+.tray h2 {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+.tray-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.tray .chip { padding: 3px 9px; font-size: 12.5px; }
+.tray .chip.dim { opacity: 0.25; }
+
+/* Tooltip */
+.tip {
+  position: absolute;
+  z-index: 5;
+  max-width: 260px;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  padding: 9px 11px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  pointer-events: none;
+  display: none;
+}
+.tip .t-name { font-weight: 700; font-size: 13px; }
+.tip .t-meta { color: var(--fg-2); margin: 1px 0 4px; display: flex; align-items: center; gap: 6px; }
+.tip .t-meta .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.tip .t-desc { color: var(--fg-2); }
+
+/* Cards */
+.cards-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 40px 0 14px;
+}
+h2.section {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 24px;
+  margin: 0;
+}
+.cards-head .count { color: var(--muted); font-size: 13px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+}
+.card {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card.flash { outline: 2px solid var(--accent); outline-offset: 1px; }
+.card h3 { font-size: 15.5px; font-weight: 700; margin: 0; line-height: 1.3; }
+.card .meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.card .meta .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.card .meta .sep { color: var(--muted); }
+.card p { margin: 0; font-size: 13.5px; color: var(--fg-2); }
+.card .foot { margin-top: auto; padding-top: 4px; font-size: 13px; display: flex; gap: 10px; align-items: center; }
+.badge {
+  font-size: 11px;
+  border: 1px solid var(--hairline);
+  color: var(--muted);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+.empty { color: var(--muted); padding: 24px 4px; }
+
+/* State of play */
+.facts { margin: 14px 0 0; padding: 0; list-style: none; max-width: 72ch; }
+.facts li {
+  padding: 10px 0;
+  border-top: 1px solid var(--hairline);
+  color: var(--fg-2);
+  font-size: 14px;
+}
+.facts li strong { color: var(--fg); }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 72ch;
+}
+footer p { margin: 0 0 6px; }
+
+@media (max-width: 720px) {
+  .tray { position: static; max-width: none; margin: 0; border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+  .controls input[type="search"] { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pin { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">AI safety &amp; governance · Latin America</p>
+    <h1>LatAm AI Safety Map</h1>
+    <p class="intro" id="intro-text">Who works on AI safety in Latin America: communities, training and fellowship programs, research groups, and field-building efforts across the region.</p>
+    <p class="intro">Hover a pin for details, or filter the cards below. The wider governance landscape of regulators, national AI policies, and digital-rights groups sits behind a toggle. Modeled on the <a href="https://aisafety.com/map" target="_blank" rel="noopener">AISafety.com field map</a>, which covers the global field.</p>
+    <p class="statline" id="statline"></p>
+  </header>
+
+  <section class="controls" aria-label="Filters">
+    <input type="search" id="q" placeholder="Search listings" aria-label="Search listings">
+    <select id="country" aria-label="Filter by country"><option value="">All countries</option></select>
+    <div class="chips" id="cat-chips" role="group" aria-label="Filter by category"></div>
+  </section>
+
+  <section class="map-panel" aria-label="Map">
+    <svg id="map" role="img" aria-label="Map of Latin America with pins for each listed organization"></svg>
+    <div class="tray" id="tray" hidden>
+      <h2>Regional &amp; online</h2>
+      <div class="tray-chips" id="tray-chips"></div>
+    </div>
+    <div class="tip" id="tip"></div>
+  </section>
+
+  <section>
+    <div class="cards-head">
+      <h2 class="section">Listings</h2>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="empty" hidden>Nothing matches these filters.</p>
+  </section>
+
+  <section id="context-section" hidden>
+    <div class="cards-head">
+      <h2 class="section">State of play</h2>
+    </div>
+    <ul class="facts" id="facts"></ul>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+"use strict";
+
+const CATS = [
+  { id: "research",   label: "Research" },
+  { id: "government", label: "Government & regional bodies" },
+  { id: "policy",     label: "Policy & civil society" },
+  { id: "training",   label: "Training & fellowships" },
+  { id: "community",  label: "Community" },
+  { id: "career",     label: "Career support" },
+  { id: "media",      label: "Media & resources" }
+];
+const CAT_LABEL = Object.fromEntries(CATS.map(c => [c.id, c.label]));
+
+// Verified November 2026 against each organization's own public pages. ll is [lat, lon]; ll: null => regional/online tray.
+const DATA = [
+  // Research
+  { n: "Observatorio de Riesgos Catastróficos Globales (ORCG)", s: "ORCG", cat: "research", country: "Regional", city: null, ll: null, url: "https://www.orcg.info", d: "Policy research network on global catastrophic risks for the Spanish-speaking world. AI risk is a core workstream, with reports on AI governance in Latin America and advocacy for international red lines." },
+  { n: "GPGAIA (IEA-USP)", s: "GPGAIA", cat: "research", country: "Brazil", city: "São Paulo", ll: [-23.55, -46.63], url: "https://www.iea.usp.br/pesquisa/catedras-e-convenios/catedra-oscar-sala", w: 1, d: "Research group at USP's Institute of Advanced Studies, formed in 2025 under Virgílio Almeida, focused on the governance of AI agents." },
+  { n: "Centro Nacional de Inteligencia Artificial (CENIA)", s: "CENIA", cat: "research", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://cenia.cl", w: 1, d: "Chile's national AI research center. Produces the Latin American AI Index (ILIA) with UN-ECLAC and coordinates LatamGPT, the region's sovereign language-model project." },
+
+  // Government & regional bodies
+  { n: "Autoridade Nacional de Proteção de Dados (ANPD)", s: "ANPD", cat: "government", country: "Brazil", city: "Brasília", ll: [-15.79, -47.88], url: "https://www.gov.br/anpd", w: 1, d: "Brazil's data protection authority, made a full regulatory agency in February 2026 and expected to coordinate the national AI regulation system under the pending AI bill, PL 2338." },
+  { n: "MCTI — Plano Brasileiro de IA", s: "MCTI (PBIA)", cat: "government", country: "Brazil", city: "Brasília", ll: [-15.79, -47.88], url: "https://www.gov.br/mcti", w: 1, d: "Brazil's science ministry coordinates the 2024–2028 national AI plan, a R$23bn program that includes a sovereign supercomputer and governance measures." },
+  { n: "Ministerio de Ciencia, Tecnología, Conocimiento e Innovación", s: "MinCiencia", cat: "government", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://www.minciencia.gob.cl", w: 1, d: "Owns Chile's national AI policy and sponsors the AI bill now in the Senate. Chile was the first country to complete UNESCO's AI readiness assessment." },
+  { n: "Agencia de Transformación Digital y Telecomunicaciones (ATDT)", s: "ATDT", cat: "government", country: "Mexico", city: "Mexico City", ll: [19.43, -99.13], url: "https://www.gob.mx/atdt", w: 1, d: "Mexico's federal digital agency. Published the country's first National AI Plan in April 2026; Mexico has no general AI law yet." },
+  { n: "DNP — Política Nacional de IA (CONPES 4144)", s: "DNP / CONPES", cat: "government", country: "Colombia", city: "Bogotá", ll: [4.71, -74.07], url: "https://www.dnp.gov.co", w: 1, d: "Colombia's 2025 national AI policy, led by the planning department and ICT ministry, with ethics and governance as one of six axes. A risk-tiered bill on public-sector AI is in Congress." },
+  { n: "Agesic", s: "Agesic", cat: "government", country: "Uruguay", city: "Montevideo", ll: [-34.90, -56.16], url: "https://www.gub.uy/agencia-gobierno-electronico-sociedad-informacion-conocimiento", w: 1, d: "Uruguay's digital government agency and author of the national AI strategy to 2030, whose first axis is a responsible-AI governance framework." },
+  { n: "Secretaría de Gobierno y Transformación Digital (PCM)", s: "SGTD Peru", cat: "government", country: "Peru", city: "Lima", ll: [-12.05, -77.04], url: "https://www.gob.pe/pcm", w: 1, d: "Peru's national AI authority under Law 31814 and its 2025 regulation, the first general AI regulation in force in Latin America. Runs regulatory sandboxes and is drafting the national AI strategy." },
+  { n: "UNESCO Regional Office, Montevideo", s: "UNESCO Montevideo", cat: "government", country: "Uruguay", city: "Montevideo", ll: [-34.90, -56.16], url: "https://www.unesco.org/en/fieldoffice/montevideo", w: 1, d: "Leads UNESCO's AI ethics work for the region: readiness assessments in some 14 countries and technical support for the ministerial summit process." },
+  { n: "CEPAL / ECLAC", s: "CEPAL", cat: "government", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://www.cepal.org", w: 1, d: "UN regional commission. Co-publishes the Latin American AI Index with CENIA and hosts the eLAC digital agenda, where regional AI commitments sit." },
+  { n: "fAIr LAC (IDB)", s: "fAIr LAC", cat: "government", country: "Regional", city: null, ll: null, url: "https://fairlac.iadb.org", w: 1, d: "The Inter-American Development Bank's responsible-AI initiative: tools, training, and policy support for governments and firms adopting AI." },
+  { n: "LAC Ministerial Summits on AI Ethics", s: "Ministerial summits", cat: "government", country: "Regional", city: null, ll: null, url: "https://oecd.ai/en/dashboards/policy-initiatives/santo-domingo-declaration-%E2%80%94-third-ministerial-summit-and-high-authorities-on-the-ethics-of-artificial-intelligence-in-latin-america-and-the-caribbean", w: 1, d: "The region's main intergovernmental AI governance process, backed by UNESCO and CAF: Santiago 2023, Montevideo 2024, and Santo Domingo 2026, which adopted a regional roadmap for 2026–2027." },
+
+  // Policy & civil society
+  { n: "Derechos Digitales", s: "Derechos Digitales", cat: "policy", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://www.derechosdigitales.org", w: 1, d: "Latin American digital-rights organization and regional hub of the Global Index on Responsible AI; a steady presence in UN, IACHR, and national AI regulation processes." },
+  { n: "Data Privacy Brasil", s: "Data Privacy Brasil", cat: "policy", country: "Brazil", city: "São Paulo", ll: [-23.55, -46.63], url: "https://www.dataprivacybr.org", w: 1, d: "Research association at the center of Brazil's AI bill debate, contributing drafting input to the congressional special committee and publishing empirical research on the process." },
+  { n: "Instituto de Tecnologia e Sociedade (ITS Rio)", s: "ITS Rio", cat: "policy", country: "Brazil", city: "Rio de Janeiro", ll: [-22.91, -43.17], url: "https://itsrio.org", w: 1, d: "Technology-and-society institute working on AI regulation, AI in elections, and, with CEBRI, the proposal for a Brazilian AI safety institute." },
+  { n: "CEBRI — AISO proposal", s: "CEBRI (AISO)", cat: "policy", country: "Brazil", city: "Rio de Janeiro", ll: [-22.91, -43.17], url: "https://cebri.org/en/doc/375/an-ai-safety-and-opportunities-institute-for-brazil-a-sketch-of-characteristics-functions-and-potential-challenges", d: "Foreign-policy think tank behind the 2025 proposal for an AI Safety and Opportunities Institute (AISO) in Brazil, the region's most concrete AI-safety-institute design." },
+  { n: "Instituto de Referência em Internet e Sociedade (IRIS)", s: "IRIS", cat: "policy", country: "Brazil", city: "Belo Horizonte", ll: [-19.92, -43.94], url: "https://irisbh.com.br", w: 1, d: "Internet-and-society research center filing technical input on AI regulation, AI in public institutions, and electoral rules." },
+  { n: "CEPI — FGV Direito SP", s: "CEPI-FGV", cat: "policy", country: "Brazil", city: "São Paulo", ll: [-23.55, -46.63], url: "https://direitosp.fgv.br", w: 1, d: "Law-school research center studying AI governance and the impact of AI on legal practice, with submissions to the Senate's commission of AI jurists." },
+  { n: "CELE — Universidad de Palermo", s: "CELE", cat: "policy", country: "Argentina", city: "Buenos Aires", ll: [-34.60, -58.38], url: "https://www.palermo.edu/cele/", w: 1, d: "Research center tracking AI regulation across the region from a freedom-of-expression angle, with comparative mappings of regulatory models." },
+  { n: "CETyS — Universidad de San Andrés", s: "CETyS", cat: "policy", country: "Argentina", city: "Buenos Aires", ll: [-34.60, -58.38], url: "https://udesa.edu.ar/cetys", w: 1, d: "Research center on AI governance, with a regional program on generative AI and responsible digital transformation in the judiciary." },
+  { n: "GobLab UAI", s: "GobLab UAI", cat: "policy", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://goblab.uai.cl", w: 1, d: "Public-innovation lab behind Chile's algorithmic transparency agenda: impact assessments, bias measurement, and the state's public algorithms platform." },
+  { n: "TEDIC", s: "TEDIC", cat: "policy", country: "Paraguay", city: "Asunción", ll: [-25.28, -57.63], url: "https://www.tedic.org", w: 1, d: "Digital-rights NGO documenting state AI use in Paraguay and author of the country's chapter of the Global Index on Responsible AI." },
+  { n: "Access Now — Latin America", s: "Access Now LatAm", cat: "policy", country: "Regional", city: null, ll: null, url: "https://www.accessnow.org/region/latin-america-the-caribbean/", w: 1, d: "Global digital-rights organization with a regional policy team; mapped where and how AI is being regulated across Latin America." },
+  { n: "Fundación Karisma", s: "Karisma", cat: "policy", country: "Colombia", city: "Bogotá", ll: [4.71, -74.07], url: "https://web.karisma.org.co", w: 1, d: "Long-standing Colombian digital-rights organization that has intervened in Congress on the country's AI bills.", status: "unclear" },
+  { n: "Centro de Estudos em Governança de IA (CEGIA)", s: "CEGIA", cat: "policy", country: "Brazil", city: "Brasília", ll: [-15.79, -47.88], url: "https://cegia.org.br", d: "Nonprofit working toward a safe transition to advanced AI: research on systemic risk, technical support for Brazil's AI bill, and Portuguese translations of AI safety materials." },
+
+  // Training & fellowships
+  { n: "AISAR — Becas de AI Safety Argentina", s: "AISAR", cat: "training", country: "Argentina", city: "Buenos Aires", ll: [-34.60, -58.38], url: "https://scholarship.aisafety.ar", d: "Six-month funded AI safety research scholarships hosted at the UBA-CONICET computer science institute, with stipends, compute, and paid mentors. Second cohort started October 2026." },
+  { n: "Apart Research — Global South hackathons", s: "Apart hackathons", cat: "training", country: "Regional", city: null, ll: null, url: "https://apartresearch.com", d: "AI safety research sprints with physical hubs across the region, from Buenos Aires and Bogotá to Mérida and Florianópolis. Winning teams feed into Apart's fellowship." },
+  { n: "ML4Good — LatAm bootcamps", s: "ML4Good", cat: "training", country: "Regional", city: null, ll: null, url: "https://ml4good.org", d: "Free ten-day AI safety bootcamps; editions held in Brazil (2024) and Colombia (2025), open to participants across the region." },
+  { n: "AI Safety Collab — Spanish edition", s: "AIS Collab ES", cat: "training", country: "Regional", city: null, ll: null, url: "https://forum.effectivealtruism.org/posts/MwdLumQpcb33JmRY7/enais-ai-safety-collab-2026-winter-spanish-edition", d: "ENAIS's part-time online course on AI safety fundamentals; its first Spanish-language cohort ran in early 2026." },
+  { n: "Condor Initiative", s: "Condor", cat: "training", country: "Brazil", city: null, ll: null, url: "https://www.condorinitiative.org", d: "Ran residential camps introducing top Brazilian students to AI safety careers, backed by Open Philanthropy. Wound down by 2026.", status: "inactive" },
+  { n: "AI Futures Fellowship", s: "AI Futures Fellowship", cat: "training", country: "Mexico", city: "Mexico City", ll: [19.43, -99.13], url: "https://aifuturesfellowship.org", d: "Eight-week fellowship on catastrophic AI risks hosted at ITAM, with stipends and mentorship. Last cohort ran in early 2024.", status: "inactive" },
+
+  // Community
+  { n: "Buenos Aires AI Safety Hub (BAISH)", s: "BAISH", cat: "community", country: "Argentina", city: "Buenos Aires", ll: [-34.60, -58.38], url: "https://baish.com.ar", d: "The region's largest AI safety community, founded 2024: free technical and governance courses with BlueDot Impact, research sprints, monthly socials, and BAISH Labs." },
+  { n: "AI Safety México (AISMX)", s: "AISMX", cat: "community", country: "Mexico", city: "Guadalajara", ll: [20.67, -103.35], url: "https://www.aismx.org", d: "Builds technical and governance AI safety capacity in Mexico, with chapters in Guadalajara and Yucatán: Spanish-language courses, hackathons with Apart Research, and VIGÍA, a pipeline tracking AI risk signals in the official gazette." },
+  { n: "AI Safety Colombia", s: "AIS Colombia", cat: "community", country: "Colombia", city: "Bogotá", ll: [4.71, -74.07], url: "https://forum.effectivealtruism.org/groups/kWaENZ2iXoucur97G", d: "Community of researchers, engineers, and policy professionals. Co-ran ML4Good Colombia and hosted the Bogotá hub of the 2026 Global South hackathon, whose teams took two of its six global wins." },
+  { n: "AI Safety Brazil", s: "AIS Brazil", cat: "community", country: "Brazil", city: null, ll: null, url: "https://luma.com/sooo8spc", d: "Community running free monthly online meetups on AI safety and governance, from the UN Global Dialogue to Brazil's AI bill." },
+  { n: "ImpactRIO", s: "ImpactRIO", cat: "community", country: "Brazil", city: "Rio de Janeiro", ll: [-22.91, -43.17], url: "https://www.linkedin.com/company/impact-rio", d: "Brazil's first AI safety group, founded 2023: ran alignment and governance fellowships on BlueDot curricula before winding down.", status: "inactive" },
+  { n: "CHAIS — Chile AI Safety", s: "CHAIS", cat: "community", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://chais.cl", d: "Early-stage initiative building AI safety as a discipline in Chile, across technical research, governance, and training. Runs a weekly reading group and a resource index; training programs are in design." },
+  { n: "AI Safety Initiative UC Chile", s: "AIS UC Chile", cat: "community", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: null, d: "Student group at UC Chile that ran the country's first AI safety hackathon in 2023; currently dormant.", status: "unclear" },
+  { n: "LANAIS — Latin American Network for AI Safety", s: "LANAIS", cat: "community", country: "Regional", city: null, ll: null, url: "https://lanais-website.pages.dev", d: "Early-stage network connecting AI safety researchers, students, and organizers across the region, modeled on its European counterpart ENAIS, with a board spanning six countries." },
+
+  // Career support
+  { n: "Carreras con Impacto", s: "Carreras con Impacto", cat: "career", country: "Regional", city: null, ll: null, url: "https://carrerasconimpacto.org", d: "Spanish-language career organization mentoring students across the region toward work on global catastrophic risks, with AI safety and AI governance courses and a 16-week mentorship program.", status: "unclear" },
+
+  // Media & resources
+  { n: "RiesgosIA.org", s: "RiesgosIA", cat: "media", country: "Regional", city: null, ll: null, url: "https://riesgosia.org", d: "Spanish-language reference on AI risks: a periodic table of 118 risks, a glossary, a career guide, and a mirror of the MIT AI Risk Repository. Also listed on the global field map." },
+  { n: "HorizonteIA", s: "HorizonteIA", cat: "media", country: "Regional", city: null, ll: null, url: "https://horizonte-ia.info", d: "Automated weekday AI briefing in Portuguese and Spanish covering frontier models, safety, and governance, built to break the English-language bubble." }
+];
+
+// Regional context, late 2026. Compiled from legislative trackers, official gazettes, and summit records.
+const FACTS = [
+  "<strong>Peru</strong> is the first country in the region with a general AI law and regulation in force: Ley 31814 (2023) and its September 2025 reglamento, effective January 2026.",
+  "<strong>Brazil</strong>'s AI bill (PL 2338/2023) passed the Senate in December 2024 and has sat in a Chamber of Deputies special committee since. The ANPD, made a full regulatory agency in February 2026, is expected to anchor the future framework.",
+  "<strong>Chile</strong>'s risk-based AI bill passed the Chamber in October 2025 and advanced in the Senate in October 2026. It is not yet law.",
+  "<strong>Mexico</strong> has no general AI law. The federal digital agency published a National AI Plan in April 2026, and rules are advancing sector by sector.",
+  "<strong>Argentina</strong>'s government has taken the opposite tack: a minimal-regulation AI framework bill plus incentives for AI and data-center investment (2026).",
+  "The main <strong>regional process</strong> is the UNESCO/CAF-backed ministerial summits on AI ethics: Santiago 2023, Montevideo 2024, and Santo Domingo in June 2026, which adopted a regional roadmap for 2026–2027.",
+  "No Latin American country operates an <strong>AI safety institute</strong> or belongs to the International Network of AI Safety Institutes. The closest live effort is the 2025 CEBRI and ITS Rio proposal for a Brazilian AI Safety and Opportunities Institute.",
+  "<strong>Funding</strong> for the region's safety groups comes almost entirely from outside: Coefficient Giving (formerly Open Philanthropy), EA Funds, Manifund, and Apart Research. No LatAm-based funder of this work was found."
+];
+
+const CITY_LBL_LEFT = new Set(["Buenos Aires", "São Paulo", "Guadalajara"]);
+
+const REGION = new Set([
+  "Mexico","Guatemala","Belize","Honduras","El Salvador","Nicaragua","Costa Rica","Panama",
+  "Colombia","Venezuela","Guyana","Suriname","Ecuador","Peru","Brazil","Bolivia","Paraguay",
+  "Chile","Argentina","Uruguay","Cuba","Haiti","Dominican Rep.","Jamaica","Puerto Rico",
+  "Trinidad and Tobago"
+]);
+
+const state = { cat: null, country: "", q: "", wide: false };
+const $ = id => document.getElementById(id);
+
+function entryMatches(e) {
+  if (!state.wide && e.w) return false;
+  if (state.cat && e.cat !== state.cat) return false;
+  if (state.country && e.country !== state.country) return false;
+  if (state.q) {
+    const hay = (e.n + " " + (e.s || "") + " " + e.d + " " + e.country + " " + (e.city || "") + " " + CAT_LABEL[e.cat]).toLowerCase();
+    if (!hay.includes(state.q)) return false;
+  }
+  return true;
+}
+
+function cardId(i) { return "card-" + i; }
+
+function renderChips() {
+  const box = $("cat-chips");
+  box.innerHTML = "";
+  const mk = (id, label, count) => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.setAttribute("aria-pressed", String(state.cat === id));
+    b.innerHTML = (id ? '<span class="dot bg-' + id + '"></span>' : "") +
+      label + (count != null ? ' <span class="n">' + count + "</span>" : "");
+    b.addEventListener("click", () => { state.cat = (state.cat === id) ? null : id; update(); });
+    box.appendChild(b);
+  };
+  const inScope = e => state.wide || !e.w;
+  mk(null, "All", DATA.filter(inScope).length);
+  for (const c of CATS) {
+    const n = DATA.filter(e => e.cat === c.id && inScope(e)).length;
+    if (n) mk(c.id, c.label, n);
+  }
+  const t = document.createElement("button");
+  t.className = "chip wide-toggle";
+  t.setAttribute("aria-pressed", String(state.wide));
+  t.innerHTML = (state.wide ? "Hide" : "Show") + ' wider governance landscape <span class="n">' +
+    DATA.filter(e => e.w).length + "</span>";
+  t.addEventListener("click", () => {
+    state.wide = !state.wide;
+    if (!state.wide && state.cat && !DATA.some(e => e.cat === state.cat && !e.w)) state.cat = null;
+    update();
+  });
+  box.appendChild(t);
+}
+
+function renderCards() {
+  const grid = $("grid");
+  grid.innerHTML = "";
+  const order = Object.fromEntries(CATS.map((c, i) => [c.id, i]));
+  const sorted = DATA.map((e, i) => ({ e, i }))
+    .sort((a, b) => (order[a.e.cat] - order[b.e.cat]) || a.e.n.localeCompare(b.e.n));
+  let shown = 0;
+  for (const { e, i } of sorted) {
+    const ok = entryMatches(e);
+    if (ok) shown++;
+    const card = document.createElement("article");
+    card.className = "card";
+    card.id = cardId(i);
+    card.hidden = !ok;
+    const place = e.city ? e.city + ", " + e.country : e.country;
+    const status = e.status && e.status !== "active"
+      ? ' <span class="badge">' + (e.status === "inactive" ? "inactive" : "status unclear") + "</span>" : "";
+    let host = "";
+    try { host = new URL(e.url).hostname.replace(/^www\./, ""); } catch (_) {}
+    const foot = e.url && host
+      ? '<div class="foot"><a href="' + e.url + '" target="_blank" rel="noopener">' + host + "</a></div>"
+      : "";
+    card.innerHTML =
+      "<h3>" + e.n + status + "</h3>" +
+      '<div class="meta"><span class="dot bg-' + e.cat + '"></span>' + CAT_LABEL[e.cat] +
+      ' <span class="sep">·</span> ' + place + "</div>" +
+      "<p>" + e.d + "</p>" + foot;
+    grid.appendChild(card);
+  }
+  const total = DATA.filter(e => state.wide || !e.w).length;
+  $("count").textContent = shown === total ? shown + " listings" : shown + " of " + total;
+  $("empty").hidden = shown !== 0;
+}
+
+function jumpToCard(i) {
+  if (DATA[i] && DATA[i].w) state.wide = true;
+  state.cat = null; state.country = ""; state.q = ""; $("q").value = ""; $("country").value = "";
+  update();
+  const card = $(cardId(i));
+  if (!card) return;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  card.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  card.classList.add("flash");
+  setTimeout(() => card.classList.remove("flash"), 1800);
+}
+
+const tip = $("tip");
+function showTip(e, el, panel) {
+  const place = e.city ? e.city + ", " + e.country : e.country;
+  tip.innerHTML =
+    '<div class="t-name">' + e.n + "</div>" +
+    '<div class="t-meta"><span class="dot bg-' + e.cat + '"></span>' + CAT_LABEL[e.cat] + " · " + place + "</div>" +
+    '<div class="t-desc">' + e.d + "</div>";
+  tip.style.display = "block";
+  const pb = panel.getBoundingClientRect();
+  const eb = el.getBoundingClientRect();
+  let x = eb.left - pb.left + eb.width / 2 + 12;
+  let y = eb.top - pb.top - 10;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  if (x + tw > pb.width - 10) x = eb.left - pb.left - tw - 12;
+  if (x < 10) x = 10;
+  if (y + th > pb.height - 10) y = pb.height - th - 10;
+  if (y < 10) y = 10;
+  tip.style.left = x + "px";
+  tip.style.top = y + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+function renderTray() {
+  const regional = DATA.map((e, i) => ({ e, i })).filter(x => !x.e.ll);
+  const tray = $("tray");
+  tray.hidden = regional.length === 0;
+  const box = $("tray-chips");
+  box.innerHTML = "";
+  const panel = document.querySelector(".map-panel");
+  for (const { e, i } of regional) {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.dataset.idx = i;
+    b.innerHTML = '<span class="dot bg-' + e.cat + '"></span>' + (e.s || e.n);
+    b.addEventListener("mouseenter", () => showTip(e, b, panel));
+    b.addEventListener("mouseleave", hideTip);
+    b.addEventListener("focus", () => showTip(e, b, panel));
+    b.addEventListener("blur", hideTip);
+    b.addEventListener("click", () => { hideTip(); jumpToCard(i); });
+    box.appendChild(b);
+  }
+}
+
+let pinSel = null;
+function drawMap(world) {
+  const W = 840, H = 940;
+  const svg = d3.select("#map").attr("viewBox", "0 0 " + W + " " + H);
+  const all = topojson.feature(world, world.objects.countries).features;
+  const latam = all.filter(f => REGION.has(f.properties.name));
+  const proj = d3.geoEqualEarth();
+  proj.fitExtent([[26, 26], [W - 26, H - 26]], { type: "FeatureCollection", features: latam });
+  const path = d3.geoPath(proj);
+  const withEntries = new Set(DATA.map(e => e.country));
+
+  svg.append("g").selectAll("path").data(latam).join("path")
+    .attr("class", d => "country" + (withEntries.has(d.properties.name) ? " active" : ""))
+    .attr("d", path);
+
+  // Group placed entries by city so co-located pins fan out around the city point.
+  const placed = DATA.map((e, i) => ({ e, i })).filter(x => Array.isArray(x.e.ll));
+  const byCity = d3.group(placed, x => x.e.city + "|" + x.e.country);
+  const panel = document.querySelector(".map-panel");
+  const gPins = svg.append("g");
+  const gLabels = svg.append("g");
+
+  for (const [key, items] of byCity) {
+    const [lat, lon] = items[0].e.ll;
+    const p = proj([lon, lat]);
+    if (!p) continue;
+    const n = items.length;
+    items.forEach((x, k) => {
+      let cx = p[0], cy = p[1];
+      if (n > 1) {
+        const a = (k / n) * 2 * Math.PI - Math.PI / 2;
+        const r = n === 2 ? 7 : 7 + 1.1 * n;
+        cx += r * Math.cos(a); cy += r * Math.sin(a);
+      }
+      x.cx = cx; x.cy = cy;
+    });
+    const cityName = items[0].e.city;
+    const left = CITY_LBL_LEFT.has(cityName);
+    const spread = n === 1 ? 0 : (n === 2 ? 7 : 7 + 1.1 * n);
+    gLabels.append("text")
+      .attr("class", "city-label")
+      .attr("x", p[0] + (left ? -(spread + 9) : spread + 9))
+      .attr("y", p[1] + 3.5)
+      .attr("text-anchor", left ? "end" : "start")
+      .text(cityName);
+  }
+
+  pinSel = gPins.selectAll("circle").data(placed).join("circle")
+    .attr("class", x => "pin cat-" + x.e.cat + (x.e.status === "inactive" ? " inactive-org" : ""))
+    .attr("cx", x => x.cx).attr("cy", x => x.cy).attr("r", 5.5)
+    .attr("tabindex", 0)
+    .attr("role", "img")
+    .attr("aria-label", x => x.e.n + ", " + CAT_LABEL[x.e.cat] + ", " + x.e.city + ", " + x.e.country)
+    .on("mouseenter", function (ev, x) { showTip(x.e, this, panel); })
+    .on("mouseleave", hideTip)
+    .on("focus", function (ev, x) { showTip(x.e, this, panel); })
+    .on("blur", hideTip)
+    .on("click", (ev, x) => { hideTip(); jumpToCard(x.i); })
+    .on("keydown", (ev, x) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); hideTip(); jumpToCard(x.i); } });
+}
+
+function updateMapDim() {
+  if (pinSel) pinSel.classed("dim", x => !entryMatches(x.e));
+  document.querySelectorAll("#tray-chips .chip").forEach(ch => {
+    ch.classList.toggle("dim", !entryMatches(DATA[+ch.dataset.idx]));
+  });
+}
+
+function update() {
+  const visible = DATA.filter(e => state.wide || !e.w);
+  const nc = new Set(visible.filter(e => e.country !== "Regional").map(e => e.country)).size;
+  $("statline").innerHTML = "<strong>" + visible.length + "</strong> listings · <strong>" +
+    nc + "</strong> countries · compiled 26 November 2026";
+  renderChips();
+  renderCards();
+  updateMapDim();
+}
+
+function init() {
+  const countries = [...new Set(DATA.map(e => e.country))].sort();
+  for (const c of countries) {
+    const o = document.createElement("option");
+    o.value = c; o.textContent = c;
+    $("country").appendChild(o);
+  }
+  $("country").addEventListener("change", ev => { state.country = ev.target.value; update(); });
+  $("q").addEventListener("input", ev => { state.q = ev.target.value.trim().toLowerCase(); update(); });
+
+  if (FACTS.length) {
+    $("context-section").hidden = false;
+    for (const f of FACTS) {
+      const li = document.createElement("li");
+      li.innerHTML = f;
+      $("facts").appendChild(li);
+    }
+  }
+
+  $("foot").innerHTML =
+    "<p>Format borrowed, with admiration, from the <a href='https://aisafety.com/map' target='_blank' rel='noopener'>AISafety.com field map</a>. This page is independent and not affiliated with AISafety.com.</p>" +
+    "<p>Compiled in November 2026 from each organization's own public pages, legislative trackers, and the June 2026 EA Forum mapping of the LatAm AI safety ecosystem. Descriptions paraphrase what the organizations say they do; inclusion is not endorsement. If something is missing, wrong, or defunct, it needs a correction.</p>";
+
+  renderTray();
+  update();
+
+  fetch("countries-110m.json")
+    .then(r => r.json())
+    .then(world => { drawMap(world); updateMapDim(); })
+    .catch(() => {
+      document.querySelector(".map-panel").style.display = "none";
+    });
+}
+init();
+</script>

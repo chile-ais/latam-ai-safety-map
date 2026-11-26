@@ -1,52 +1,42 @@
 // Draws the illustrated island. Each region of the island is one category.
 // Uses the global d3 (loaded from the CDN in index.html).
 
-const WIDTH = 1000;
-const HEIGHT = 640;
+import * as draw from "./sprites.js";
 
-// Landmasses are noisy ellipses: centre, radii, and a seed for the coastline.
-const ISLAND = { cx: 480, cy: 348, rx: 352, ry: 208, seed: 7, points: 24 };
-const GRAVEYARD = { cx: 892, cy: 574, rx: 88, ry: 36, seed: 31, points: 12 };
-const ISLET = { cx: 88, cy: 150, rx: 40, ry: 22, seed: 5, points: 10 };
+const WIDTH = 1100;
+const HEIGHT = 720;
 
-// site: the Voronoi seed that shapes the region. pins: the centre of its pin cluster.
+// squareness 2 gives an ellipse. Higher values give a rounded rectangle.
+const ISLAND = { cx: 545, cy: 385, rx: 385, ry: 232, squareness: 4, seed: 7 };
+const GRAVEYARD = { cx: 990, cy: 652, rx: 94, ry: 38, squareness: 2.6, seed: 31 };
+const ISLET = { cx: 86, cy: 172, rx: 46, ry: 25, squareness: 2.4, seed: 5 };
+
+// site: the Voronoi seed that shapes the region. label and pins: the centres of the region label and of the pin cluster.
 const REGIONS = [
-  { id: "community", name: "Bahía Comunidad", site: [300, 265], pins: [306, 300], fill: "#1fa67d" },
-  { id: "training", name: "Valle Formación", site: [595, 232], pins: [590, 252], fill: "#15896a" },
-  { id: "governance", name: "Cerro Gobernanza", site: [245, 475], pins: [262, 464], fill: "#15896a" },
-  { id: "research", name: "Sierra Investigación", site: [455, 440], pins: [452, 486], fill: "#2bb98f" },
-  { id: "media", name: "Costa Medios", site: [650, 480], pins: [640, 484], fill: "#f2a77e" },
-  { id: "career", name: "Puerto Carreras", site: [770, 345], pins: [748, 364], fill: "#e4582c" }
+  { id: "community", name: "Bahía Comunidad", site: [305, 280], label: [300, 262], pins: [300, 325], fill: "#22a67c", texture: "grass" },
+  { id: "training", name: "Valle Formación", site: [600, 245], label: [612, 268], pins: [612, 307], fill: "#14866a", texture: "speckle" },
+  { id: "research", name: "Sierra Investigación", site: [555, 430], label: [510, 494], pins: [634, 432], fill: "#33b98d", texture: "grass" },
+  { id: "governance", name: "Cerro Gobernanza", site: [305, 505], label: [330, 438], pins: [330, 478], fill: "#117a5f", texture: "speckle" },
+  { id: "media", name: "Costa Medios", site: [765, 525], label: [770, 468], pins: [770, 508], fill: "#f5b48a", texture: "sand" },
+  { id: "career", name: "Castillo Carreras", site: [835, 330], label: [835, 338], pins: [835, 382], fill: "#e4582c", texture: "strata" }
 ];
-const GRAVEYARD_REGION = { id: "graveyard", name: "Isla Panteón", label: "No longer active", pins: [892, 572] };
+const GRAVEYARD_REGION = { name: "Isla Panteón", category: "No longer active", label: [990, 600], pins: [990, 658] };
 
-const INK = {
-  shelfOuter: "#1b434c",
-  shelfInner: "#205258",
-  coast: "#0c5547",
-  cliff: "#d94e1b",
-  cliffShade: "#a8380f",
-  roof: "#e8602c",
-  roofShade: "#c4471b",
-  darkRoof: "#7a2e10",
-  cream: "#fff3e2",
-  sail: "#ffd9b8",
-  wood: "#8a4a22",
-  trunk: "#6b3d1e",
-  pine: "#0d6b55",
-  snow: "#fff8ee",
-  lamp: "#ffd166",
-  lagoon: "#8fd8c8",
-  sand: "#f3c892",
-  stone: "#8ea69c",
-  stoneShade: "#5f746c",
-  tomb: "#dfe5e0"
-};
+const SHELF = ["#1b434c", "#215359"];
+const COAST = "#0b5a48";
+const CLIFF = ["#d94e1b", "#a8380f"];
+const ROAD = ["#b8602f", "#f0b27c"];
 
-const PIN_SPACING_X = 60;
-const PIN_SPACING_Y = 50;
+const RIVER = "M452,448 C430,430 405,402 360,398 S258,410 214,398 S168,386 140,392";
+const ROADS = [
+  "M402,256 C440,270 478,266 506,252",
+  "M512,256 C528,372 650,370 730,352 S815,318 835,296",
+  "M545,356 C500,420 430,520 270,530",
+  "M868,300 C905,380 902,470 874,540"
+];
 
-const points = list => list.map(p => p.join(",")).join(" ");
+const PIN_SPACING_X = 58;
+const PIN_SPACING_Y = 52;
 
 function seededRandom(seed) {
   return function () {
@@ -60,196 +50,158 @@ function seededRandom(seed) {
 
 function coastline(land) {
   const random = seededRandom(land.seed);
+  const power = 2 / land.squareness;
   const ring = [];
-  for (let i = 0; i < land.points; i++) {
-    const angle = (i / land.points) * 2 * Math.PI;
-    const wobble = 0.9 + 0.2 * random();
-    ring.push([land.cx + Math.cos(angle) * land.rx * wobble, land.cy + Math.sin(angle) * land.ry * wobble]);
+  for (let i = 0; i < 40; i++) {
+    const t = (i / 40) * 2 * Math.PI;
+    const [c, s] = [Math.cos(t), Math.sin(t)];
+    const wobble = 1 + 0.03 * Math.sin(3 * t + land.seed) + 0.02 * Math.sin(7 * t + land.seed) + 0.025 * (random() - 0.5);
+    ring.push([
+      land.cx + land.rx * wobble * Math.sign(c) * Math.abs(c) ** power,
+      land.cy + land.ry * wobble * Math.sign(s) * Math.abs(s) ** power
+    ]);
   }
-  return d3.line().curve(d3.curveCatmullRomClosed.alpha(0.8))(ring);
+  return d3.line().curve(d3.curveCatmullRomClosed.alpha(0.5))(ring);
 }
 
-// ---- Illustration pieces. x, y is the centre of the base; s is the scale. ----
-
-function mountain(g, x, y, s = 1) {
-  g.append("polygon").attr("fill", INK.roof)
-    .attr("points", points([[x - 24 * s, y], [x, y - 44 * s], [x + 24 * s, y]]));
-  g.append("polygon").attr("fill", INK.roofShade)
-    .attr("points", points([[x, y - 44 * s], [x + 24 * s, y], [x + 5 * s, y]]));
-  g.append("polygon").attr("fill", INK.snow)
-    .attr("points", points([[x - 8 * s, y - 29.3 * s], [x, y - 44 * s], [x + 8 * s, y - 29.3 * s], [x + 3.5 * s, y - 33 * s], [x, y - 28 * s], [x - 3.5 * s, y - 33 * s]]));
+function addPatterns(defs) {
+  const tile = (id, size) => defs.append("pattern").attr("id", id)
+    .attr("width", size).attr("height", size).attr("patternUnits", "userSpaceOnUse");
+  tile("grass", 24).append("path").attr("fill", "none").attr("stroke", "rgba(255,255,255,0.17)")
+    .attr("stroke-width", 1.2).attr("stroke-linecap", "round").attr("d", "M4,10 l2,-4 l2,4 M15,21 l2,-4 l2,4");
+  const speckle = tile("speckle", 16);
+  speckle.append("circle").attr("cx", 4).attr("cy", 5).attr("r", 1.1).attr("fill", "rgba(0,0,0,0.13)");
+  speckle.append("circle").attr("cx", 12).attr("cy", 12).attr("r", 1.1).attr("fill", "rgba(255,255,255,0.09)");
+  const sand = tile("sand", 12);
+  sand.append("circle").attr("cx", 3).attr("cy", 4).attr("r", 0.9).attr("fill", "rgba(170,80,30,0.25)");
+  sand.append("circle").attr("cx", 9).attr("cy", 9).attr("r", 0.8).attr("fill", "rgba(255,255,255,0.3)");
+  tile("strata", 14).append("path").attr("stroke", "rgba(110,28,0,0.2)").attr("stroke-width", 1.4)
+    .attr("d", "M-2,4 L16,0 M-2,12 L16,8");
 }
 
-function pine(g, x, y, s = 1) {
-  g.append("rect").attr("fill", INK.trunk)
-    .attr("x", x - 1.5 * s).attr("y", y - 5 * s).attr("width", 3 * s).attr("height", 5 * s);
-  g.append("polygon").attr("fill", INK.pine)
-    .attr("points", points([[x - 8 * s, y - 4 * s], [x, y - 18 * s], [x + 8 * s, y - 4 * s]]));
-  g.append("polygon").attr("fill", INK.pine)
-    .attr("points", points([[x - 6 * s, y - 12 * s], [x, y - 24 * s], [x + 6 * s, y - 12 * s]]));
-}
-
-function palm(g, x, y, s = 1) {
-  const top = [x + 2 * s, y - 17 * s];
-  g.append("path").attr("fill", "none").attr("stroke", INK.trunk).attr("stroke-width", 2.2 * s)
-    .attr("d", `M${x},${y} Q${x + 4 * s},${y - 9 * s} ${top[0]},${top[1]}`);
-  for (const degrees of [195, 235, 285, 330, 15]) {
-    const angle = (degrees * Math.PI) / 180;
-    g.append("line").attr("stroke", INK.pine).attr("stroke-width", 3 * s).attr("stroke-linecap", "round")
-      .attr("x1", top[0]).attr("y1", top[1])
-      .attr("x2", top[0] + 10 * s * Math.cos(angle)).attr("y2", top[1] + 10 * s * Math.sin(angle));
-  }
-}
-
-function house(g, x, y, s = 1, roof = INK.roof) {
-  g.append("rect").attr("fill", INK.cream)
-    .attr("x", x - 8 * s).attr("y", y - 11 * s).attr("width", 16 * s).attr("height", 11 * s);
-  g.append("polygon").attr("fill", roof)
-    .attr("points", points([[x - 10.5 * s, y - 11 * s], [x, y - 20 * s], [x + 10.5 * s, y - 11 * s]]));
-  g.append("rect").attr("fill", INK.wood)
-    .attr("x", x - 2 * s).attr("y", y - 6 * s).attr("width", 4 * s).attr("height", 6 * s);
-}
-
-function hall(g, x, y, s = 1) {
-  g.append("rect").attr("fill", INK.cream)
-    .attr("x", x - 15 * s).attr("y", y - 3 * s).attr("width", 30 * s).attr("height", 3 * s);
-  for (const dx of [-11, -4, 4, 11]) {
-    g.append("rect").attr("fill", INK.cream)
-      .attr("x", x + (dx - 1.5) * s).attr("y", y - 15 * s).attr("width", 3 * s).attr("height", 12 * s);
-  }
-  g.append("polygon").attr("fill", INK.roof)
-    .attr("points", points([[x - 16 * s, y - 15 * s], [x, y - 25 * s], [x + 16 * s, y - 15 * s]]));
-}
-
-function lighthouse(g, x, y, s = 1) {
-  g.append("polygon").attr("fill", INK.cream)
-    .attr("points", points([[x - 6 * s, y], [x - 4 * s, y - 30 * s], [x + 4 * s, y - 30 * s], [x + 6 * s, y]]));
-  g.append("polygon").attr("fill", INK.roofShade)
-    .attr("points", points([[x - 5.4 * s, y - 9 * s], [x - 4.8 * s, y - 17 * s], [x + 4.8 * s, y - 17 * s], [x + 5.4 * s, y - 9 * s]]));
-  g.append("rect").attr("fill", INK.lamp)
-    .attr("x", x - 5 * s).attr("y", y - 36 * s).attr("width", 10 * s).attr("height", 6 * s);
-  g.append("polygon").attr("fill", INK.darkRoof)
-    .attr("points", points([[x - 6.5 * s, y - 36 * s], [x, y - 43 * s], [x + 6.5 * s, y - 36 * s]]));
-}
-
-function boat(g, x, y, s = 1) {
-  g.append("polygon").attr("fill", INK.wood)
-    .attr("points", points([[x - 14 * s, y], [x + 14 * s, y], [x + 9 * s, y + 7 * s], [x - 9 * s, y + 7 * s]]));
-  g.append("rect").attr("fill", INK.trunk)
-    .attr("x", x - 0.8 * s).attr("y", y - 24 * s).attr("width", 1.6 * s).attr("height", 24 * s);
-  g.append("polygon").attr("fill", INK.cream)
-    .attr("points", points([[x + 2 * s, y - 23 * s], [x + 13 * s, y - 3 * s], [x + 2 * s, y - 3 * s]]));
-  g.append("polygon").attr("fill", INK.sail)
-    .attr("points", points([[x - 2 * s, y - 19 * s], [x - 11 * s, y - 3 * s], [x - 2 * s, y - 3 * s]]));
-}
-
-function dock(g, x, y, length) {
-  g.append("rect").attr("fill", INK.wood).attr("x", x).attr("y", y - 3).attr("width", length).attr("height", 6);
-  for (let px = x + 6; px < x + length; px += 10) {
-    g.append("rect").attr("fill", INK.trunk).attr("x", px).attr("y", y + 3).attr("width", 2.5).attr("height", 5);
-  }
-}
-
-function cloud(g, x, y, s = 1) {
-  const puff = g.append("g").attr("fill", "#ffffff").attr("opacity", 0.92);
-  puff.append("ellipse").attr("cx", x).attr("cy", y).attr("rx", 16 * s).attr("ry", 6 * s);
-  puff.append("ellipse").attr("cx", x - 6 * s).attr("cy", y - 5 * s).attr("rx", 8 * s).attr("ry", 6 * s);
-  puff.append("ellipse").attr("cx", x + 5 * s).attr("cy", y - 7 * s).attr("rx", 9 * s).attr("ry", 7 * s);
-}
-
-function wave(g, x, y) {
-  g.append("path").attr("fill", "none").attr("stroke", "rgba(255,255,255,0.16)")
-    .attr("stroke-width", 1.4).attr("stroke-linecap", "round")
-    .attr("d", `M${x},${y} q4,-4 8,0 q4,4 8,0`);
-}
-
-function tombstone(g, x, y) {
-  g.append("path").attr("fill", INK.tomb).attr("d", `M${x - 4},${y} v-8 a4,4 0 0 1 8,0 v8 z`);
-}
-
-function compass(g, x, y) {
-  const star = "0,-26 5,-5 26,0 5,5 0,26 -5,5 -26,0 -5,-5";
-  const rose = g.append("g").attr("transform", `translate(${x},${y})`);
-  rose.append("circle").attr("r", 30).attr("fill", INK.cliffShade).attr("stroke", INK.roof).attr("stroke-width", 2.5);
-  rose.append("polygon").attr("points", star).attr("transform", "rotate(45) scale(0.62)").attr("fill", INK.roofShade);
-  rose.append("polygon").attr("points", star).attr("fill", INK.roof);
-  rose.append("circle").attr("r", 4).attr("fill", INK.cream);
-  rose.append("text").attr("y", -36).attr("text-anchor", "middle").attr("fill", INK.roof)
-    .attr("font-size", 11).attr("font-weight", 700).text("N");
-}
-
-// ---- Layers ----
-
-function drawLand(svg, shape, fill, cliff, cliffShade) {
-  const d = coastline(shape);
-  const scale = shape === ISLAND ? 1 : 0.6;
+function drawLand(svg, land, fill, cliff, cliffShade) {
+  const d = coastline(land);
+  const scale = land === ISLAND ? 1 : 0.6;
   svg.select(".shelf").append("path").attr("d", d).attr("fill", "none")
-    .attr("stroke", INK.shelfOuter).attr("stroke-width", 64 * scale).attr("stroke-linejoin", "round");
+    .attr("stroke", SHELF[0]).attr("stroke-width", 64 * scale).attr("stroke-linejoin", "round");
   svg.select(".shelf-inner").append("path").attr("d", d).attr("fill", "none")
-    .attr("stroke", INK.shelfInner).attr("stroke-width", 34 * scale).attr("stroke-linejoin", "round");
-  const land = svg.select(".land");
-  land.append("path").attr("d", d).attr("fill", cliffShade).attr("transform", "translate(0,16)");
-  land.append("path").attr("d", d).attr("fill", cliff).attr("transform", "translate(0,8)");
-  land.append("path").attr("d", d).attr("fill", fill);
+    .attr("stroke", SHELF[1]).attr("stroke-width", 34 * scale).attr("stroke-linejoin", "round");
+  const ground = svg.select(".land");
+  ground.append("path").attr("d", d).attr("fill", cliffShade).attr("transform", "translate(0,16)");
+  ground.append("path").attr("d", d).attr("fill", cliff).attr("transform", "translate(0,8)");
+  ground.append("path").attr("d", d).attr("fill", fill);
+  ground.append("path").attr("d", d).attr("fill", "url(#speckle)");
   return d;
 }
 
 function drawRegions(svg, islandPath) {
   svg.select("defs").append("clipPath").attr("id", "island-clip").append("path").attr("d", islandPath);
   const voronoi = d3.Delaunay.from(REGIONS.map(region => region.site)).voronoi([0, 0, WIDTH, HEIGHT]);
-  const cells = svg.select(".land").append("g").attr("clip-path", "url(#island-clip)");
+  const ground = svg.select(".land").append("g").attr("clip-path", "url(#island-clip)");
   REGIONS.forEach((region, i) => {
-    cells.append("path").attr("d", voronoi.renderCell(i)).attr("fill", region.fill)
-      .attr("stroke", INK.coast).attr("stroke-opacity", 0.55).attr("stroke-width", 3);
+    ground.append("path").attr("d", voronoi.renderCell(i)).attr("fill", region.fill);
+    ground.append("path").attr("d", voronoi.renderCell(i)).attr("fill", `url(#${region.texture})`);
   });
-  cells.append("ellipse").attr("cx", 150).attr("cy", 302).attr("rx", 46).attr("ry", 26).attr("fill", INK.lagoon);
+  ground.append("path").attr("d", voronoi.render()).attr("fill", "none")
+    .attr("stroke", COAST).attr("stroke-opacity", 0.45).attr("stroke-width", 3);
   svg.select(".land").append("path").attr("d", islandPath).attr("fill", "none")
-    .attr("stroke", INK.coast).attr("stroke-width", 2.5);
+    .attr("stroke", COAST).attr("stroke-width", 3);
 }
 
-function drawScenery(svg) {
-  const sea = svg.select(".sea");
-  [[60, 250], [210, 600], [330, 90], [700, 95], [930, 300], [560, 610], [40, 470], [940, 450], [770, 610]]
-    .forEach(([x, y]) => wave(sea, x, y));
-  boat(sea, 112, 300, 0.8);
-  boat(sea, 96, 478, 1.1);
-  boat(sea, 250, 596, 0.85);
-  dock(sea, 824, 398, 44);
-  boat(sea, 892, 384, 0.9);
+function drawWater(layer) {
+  layer.append("path").attr("d", RIVER).attr("fill", "none").attr("stroke", draw.INK.waterEdge)
+    .attr("stroke-width", 13).attr("stroke-linecap", "round");
+  layer.append("path").attr("d", RIVER).attr("fill", "none").attr("stroke", draw.INK.water)
+    .attr("stroke-width", 8.5).attr("stroke-linecap", "round");
+  draw.lagoon(layer, 228, 222, 32, 15);
+}
 
-  const land = svg.select(".scenery");
-  palm(land, 80, 152, 1);
-  palm(land, 100, 156, 0.8);
-  [[236, 238], [252, 228], [412, 224], [430, 238], [190, 372], [174, 386]].forEach(([x, y]) => pine(land, x, y));
-  [[522, 196], [688, 206], [706, 216]].forEach(([x, y]) => pine(land, x, y));
-  house(land, 682, 244);
-  house(land, 700, 252, 0.85);
-  hall(land, 332, 512);
-  mountain(land, 412, 398, 1.05);
-  mountain(land, 500, 402, 1.1);
-  mountain(land, 456, 392, 1.45);
-  [[392, 528], [408, 536]].forEach(([x, y]) => pine(land, x, y, 0.85));
-  palm(land, 586, 420, 1);
-  palm(land, 604, 432, 0.85);
-  lighthouse(land, 728, 492);
-  house(land, 792, 310, 1, INK.darkRoof);
-  house(land, 772, 300, 0.85, INK.darkRoof);
-  tombstone(land, 862, 592);
-  tombstone(land, 922, 592);
+function drawRoads(layer) {
+  ROADS.forEach((d, i) => {
+    layer.append("path").attr("d", d).attr("fill", "none").attr("stroke", ROAD[0])
+      .attr("stroke-width", 7).attr("stroke-linecap", "round");
+    layer.append("path").attr("d", d).attr("fill", "none").attr("stroke", ROAD[1])
+      .attr("stroke-width", 4).attr("stroke-linecap", "round").attr("stroke-dasharray", i === 3 ? "6 4" : null);
+  });
+}
 
-  const sky = svg.select(".sky");
-  cloud(sky, 168, 96, 1);
-  cloud(sky, 842, 232, 0.9);
-  cloud(sky, 70, 560, 0.8);
-  cloud(sky, 640, 128, 0.7);
-  compass(sky, 928, 84);
+function drawSea(layer) {
+  [[60, 280], [230, 652], [380, 690], [700, 96], [960, 262], [580, 690], [36, 470], [1000, 470], [820, 690], [300, 104], [140, 625]]
+    .forEach(([x, y]) => draw.wave(layer, x, y));
+  draw.dock(layer, 120, 330, 44);
+  draw.boat(layer, 102, 352, 0.8);
+  draw.boat(layer, 92, 504, 1.1);
+  draw.boat(layer, 296, 668, 0.85);
+  draw.boat(layer, 1000, 404, 0.9);
+}
+
+function drawScenery(layer) {
+  // Bahía Comunidad: a fishing village by a lagoon, and a plaza with a fountain.
+  draw.house(layer, 268, 208, 0.75, draw.INK.darkRoof);
+  draw.house(layer, 370, 216, 0.9);
+  draw.house(layer, 392, 208);
+  draw.house(layer, 416, 218, 0.85, draw.INK.darkRoof);
+  draw.plaza(layer, 404, 252);
+  draw.boat(layer, 232, 218, 0.4);
+  [[178, 272], [192, 252, 0.8], [300, 198, 0.75], [328, 204, 0.85], [434, 304], [176, 356], [196, 364, 0.8], [424, 374, 0.8], [442, 382, 0.7]]
+    .forEach(([x, y, s]) => draw.tree(layer, x, y, s));
+
+  // Valle Formación: a university town with fields.
+  draw.university(layer, 510, 250);
+  draw.fields(layer, 700, 208, 1, -6);
+  draw.house(layer, 588, 224, 0.85);
+  draw.house(layer, 606, 230, 0.75, draw.INK.darkRoof);
+  [[474, 292, 0.9], [490, 302, 0.8], [562, 212, 0.75], [640, 238, 0.8], [652, 186, 0.7]].forEach(([x, y, s]) => draw.tree(layer, x, y, s));
+
+  // Sierra Investigación: a mountain range with an observatory on the highest peak.
+  draw.mountain(layer, 520, 448, 1.55);
+  draw.observatory(layer, 520, 382, 0.8);
+  draw.mountain(layer, 470, 454, 1.15);
+  draw.mountain(layer, 578, 454, 1.15);
+  draw.mountain(layer, 430, 458, 0.9);
+  [[410, 472, 0.8], [446, 476, 0.7], [604, 472, 0.85], [590, 480, 0.7], [612, 492, 0.7]].forEach(([x, y, s]) => draw.pine(layer, x, y, s));
+
+  // Cerro Gobernanza: a capitol on a hill above a grove.
+  draw.hill(layer, 232, 540, 58, 20, "#1b8a69");
+  draw.capitol(layer, 232, 536);
+  [[330, 550], [352, 558], [374, 548], [396, 560], [418, 552], [340, 580], [362, 588], [386, 582], [408, 590], [430, 576], [302, 568], [318, 594], [282, 574, 0.8], [270, 592, 0.75]]
+    .forEach(([x, y, s]) => draw.tree(layer, x, y, s));
+
+  // Costa Medios: a beach with a lighthouse and a radio tower.
+  draw.radioTower(layer, 670, 562, 0.95);
+  draw.lighthouse(layer, 874, 548, 1.1);
+  draw.parasol(layer, 780, 574);
+  draw.parasol(layer, 806, 558, 0.85);
+  [[720, 582], [738, 592, 0.8], [826, 588, 0.9], [692, 600, 0.8], [850, 522, 0.8]].forEach(([x, y, s]) => draw.palm(layer, x, y, s));
+
+  // Castillo Carreras: a castle on the cliffs.
+  draw.castle(layer, 835, 290, 1.1);
+  [[776, 302], [898, 252, 0.9], [902, 344, 0.8], [770, 404, 0.8], [800, 248, 0.8], [868, 404, 0.7]].forEach(([x, y, s]) => draw.boulder(layer, x, y, s));
+
+  // Isla Panteón.
+  draw.tombstone(layer, 961, 634);
+  draw.cross(layer, 1019, 636);
+  draw.deadTree(layer, 1076, 664);
+
+  // The small islet.
+  draw.palm(layer, 72, 176);
+  draw.house(layer, 98, 180, 0.7);
+}
+
+function drawSky(layer) {
+  draw.cloud(layer, 210, 112);
+  draw.cloud(layer, 760, 120, 0.8);
+  draw.cloud(layer, 1010, 300, 0.9);
+  draw.cloud(layer, 70, 612, 0.8);
+  draw.cloud(layer, 600, 162, 0.6);
+  draw.compass(layer, 1032, 96);
 }
 
 // Lays the pins out in centred rows: one row up to three pins, two rows above that.
 function layoutPins(orgs, centre) {
   const perRow = orgs.length <= 3 ? orgs.length : Math.ceil(orgs.length / 2);
   const rows = Math.ceil(orgs.length / perRow);
-  const positions = orgs.map((org, k) => {
+  return orgs.map((org, k) => {
     const row = Math.floor(k / perRow);
     const inRow = row === rows - 1 ? orgs.length - perRow * (rows - 1) : perRow;
     const column = k - row * perRow;
@@ -259,21 +211,18 @@ function layoutPins(orgs, centre) {
       y: centre[1] + (row - (rows - 1) / 2) * PIN_SPACING_Y
     };
   });
-  return { positions, rows };
 }
 
-function drawRegionLabel(svg, region, label, rows) {
-  const width = Math.max(region.name.length * 6.6, label.length * 5) + 24;
-  const x = region.pins[0];
-  const y = region.pins[1] - ((rows - 1) / 2) * PIN_SPACING_Y - 40;
-  const g = svg.select(".labels").append("g").attr("class", "region-label");
+function drawRegionLabel(layer, [x, y], name, category) {
+  const width = Math.max(name.length * 6.6, category.length * 5) + 24;
+  const g = layer.append("g").attr("class", "region-label");
   g.append("rect").attr("x", x - width / 2).attr("y", y - 16).attr("width", width).attr("height", 32).attr("rx", 11);
-  g.append("text").attr("class", "region-name").attr("x", x).attr("y", y - 2).text(region.name);
-  g.append("text").attr("class", "region-category").attr("x", x).attr("y", y + 10).text(label);
+  g.append("text").attr("class", "region-name").attr("x", x).attr("y", y - 2).text(name);
+  g.append("text").attr("class", "region-category").attr("x", x).attr("y", y + 10).text(category);
 }
 
-function drawPins(svg, placed, handlers) {
-  const pins = svg.select(".pins").selectAll("g").data(placed).join("g")
+function drawPins(layer, placed, handlers) {
+  const pins = layer.selectAll("g").data(placed).join("g")
     .attr("class", d => "pin" + (d.org.status === "inactive" ? " inactive" : ""))
     .attr("transform", d => `translate(${d.x},${d.y})`)
     .attr("tabindex", 0)
@@ -306,28 +255,32 @@ function drawPins(svg, placed, handlers) {
 // Returns a function that dims the pins of the organizations for which isDimmed is true.
 export function drawMap(svgElement, orgs, categoryLabel, handlers) {
   const svg = d3.select(svgElement).attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`);
-  svg.append("defs").append("clipPath").attr("id", "pin-clip").append("circle").attr("r", 7.5);
-  for (const layer of ["shelf", "shelf-inner", "sea", "land", "scenery", "labels", "pins", "sky"]) {
+  const defs = svg.append("defs");
+  defs.append("clipPath").attr("id", "pin-clip").append("circle").attr("r", 7.5);
+  addPatterns(defs);
+  for (const layer of ["shelf", "shelf-inner", "sea", "land", "water", "roads", "scenery", "labels", "pins", "sky"]) {
     svg.append("g").attr("class", layer);
   }
 
-  const islandPath = drawLand(svg, ISLAND, REGIONS[0].fill, INK.cliff, INK.cliffShade);
+  const islandPath = drawLand(svg, ISLAND, REGIONS[0].fill, ...CLIFF);
   drawRegions(svg, islandPath);
-  drawLand(svg, GRAVEYARD, INK.stone, INK.stoneShade, "#4d5f58");
-  drawLand(svg, ISLET, INK.sand, INK.cliff, INK.cliffShade);
-  drawScenery(svg);
+  drawLand(svg, GRAVEYARD, "#93a89f", "#6b8077", "#4d5f58");
+  drawLand(svg, ISLET, draw.INK.sand, ...CLIFF);
+  drawSea(svg.select(".sea"));
+  drawWater(svg.select(".water").attr("clip-path", "url(#island-clip)"));
+  drawRoads(svg.select(".roads"));
+  drawScenery(svg.select(".scenery"));
+  drawSky(svg.select(".sky"));
 
+  const labels = svg.select(".labels");
   const placed = [];
   for (const region of REGIONS) {
-    const members = orgs.filter(org => org.category === region.id && org.status !== "inactive");
-    const { positions, rows } = layoutPins(members, region.pins);
-    placed.push(...positions);
-    drawRegionLabel(svg, region, categoryLabel[region.id], rows);
+    placed.push(...layoutPins(orgs.filter(org => org.category === region.id && org.status !== "inactive"), region.pins));
+    drawRegionLabel(labels, region.label, region.name, categoryLabel[region.id]);
   }
-  const gone = layoutPins(orgs.filter(org => org.status === "inactive"), GRAVEYARD_REGION.pins);
-  placed.push(...gone.positions);
-  drawRegionLabel(svg, GRAVEYARD_REGION, GRAVEYARD_REGION.label, gone.rows);
+  placed.push(...layoutPins(orgs.filter(org => org.status === "inactive"), GRAVEYARD_REGION.pins));
+  drawRegionLabel(labels, GRAVEYARD_REGION.label, GRAVEYARD_REGION.name, GRAVEYARD_REGION.category);
 
-  const pins = drawPins(svg, placed, handlers);
+  const pins = drawPins(svg.select(".pins"), placed, handlers);
   return isDimmed => pins.classed("dim", d => isDimmed(d.org));
 }

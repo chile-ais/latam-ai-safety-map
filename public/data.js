@@ -72,10 +72,10 @@ export const ORGS = [
   {
     name: "LANAIS — Latin American Network for AI Safety",
     short: "LANAIS",
-    initials: "LA",
     category: "community",
     country: "Regional",
     url: "https://lanais-website.pages.dev",
+    icon: "icons/lanais-website.pages.dev.png",
     description: "Network connecting AI safety researchers and policy-makers across Latin America, with a people directory and local contacts by city. Its board and members come from six countries."
   },
   {
@@ -111,10 +111,10 @@ export const ORGS = [
   {
     name: "ML4Good — LatAm bootcamps",
     short: "ML4Good",
-    initials: "ML",
     category: "training",
     country: "Regional",
     url: "https://ml4good.org",
+    icon: "icons/ml4good.org.png",
     description: "Free ten-day AI safety bootcamps; editions held in Brazil (2024) and Colombia (2025), open to participants across the region."
   },
   {
@@ -179,10 +179,10 @@ export const ORGS = [
   {
     name: "HorizonteIA",
     short: "HorizonteIA",
-    initials: "HI",
     category: "media",
     country: "Regional",
     url: "https://horizonte-ia.info",
+    icon: "icons/horizonte-ia.info.png",
     description: "Automated weekday AI briefing in Portuguese and Spanish covering frontier models, safety, and governance, built to break the English-language bubble."
   },
   {

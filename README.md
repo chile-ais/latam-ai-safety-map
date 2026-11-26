@@ -10,10 +10,12 @@ The format follows the [AISafety.com field map](https://aisafety.com/map). This 
 
 - `public/index.html` is the page.
 - `public/data.js` holds the categories and the organizations.
-- `public/map.js` draws the island and the pins with D3.
+- `public/map.js` lays out the island, the regions, and the pins with D3.
+- `public/sprites.js` draws the illustrations: buildings, trees, boats, and the other scenery.
 - `public/app.js` renders the cards and connects the filters to the map.
 - `public/styles.css` holds the styles.
 - `public/icons/` holds the organization logos shown on the pins.
+- `public/favicon.svg` and `public/apple-touch-icon.png` are the CHAIS icons from chais.cl.
 - `wrangler.jsonc` configures the deploy to Cloudflare Workers.
 
 ## Edit the data

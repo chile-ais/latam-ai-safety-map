@@ -6,7 +6,7 @@
 <title>LatAm AI Safety Map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: one column; framed "ocean" map panel up top, filterable card directory below. */
 :root {
@@ -28,7 +28,6 @@
   --cat-community: #e87ba4;
   --cat-career: #008300;
   --cat-media: #6250d6;
-  --display: "Archivo Black", "Archivo", "Helvetica Neue", Arial, sans-serif;
   --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
@@ -89,39 +88,25 @@ body {
   margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 40px 56px;
+  padding-block: 32px 56px;
 }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Header */
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-2);
-  margin: 0 0 10px;
-}
 h1 {
-  font-family: var(--display);
-  font-weight: 400;
-  font-size: clamp(34px, 6vw, 54px);
-  line-height: 1.04;
-  margin: 0 0 14px;
-  text-wrap: balance;
-}
-.intro {
-  max-width: 62ch;
-  color: var(--fg-2);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   margin: 0 0 6px;
 }
-.statline {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 10px 0 0;
+.intro {
+  max-width: 60ch;
+  color: var(--fg-2);
+  margin: 0;
 }
-.statline strong { color: var(--fg); font-weight: 600; }
 
 /* Controls */
 .controls {
@@ -129,7 +114,7 @@ h1 {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin: 26px 0 14px;
+  margin: 20px 0 14px;
 }
 .controls input[type="search"], .controls select {
   font: inherit;
@@ -163,29 +148,33 @@ h1 {
 }
 .chip .n { color: var(--muted); font-size: 12px; }
 
-/* Map panel: fixed dark-ocean illustration, the same in both themes */
+/* Map panel: fixed dark-ocean illustration, the same in both themes. One island per category. */
 .map-panel {
   position: relative;
   background: radial-gradient(130% 110% at 50% 0%, #133b46 0%, #0c2a33 55%, #081e25 100%);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
-.map-panel svg { display: block; width: 100%; height: auto; }
-.shelf1 { fill: none; stroke: rgba(173,224,206,0.10); stroke-width: 30; stroke-linejoin: round; stroke-linecap: round; }
-.shelf2 { fill: none; stroke: rgba(173,224,206,0.16); stroke-width: 13; stroke-linejoin: round; stroke-linecap: round; }
-.land-base { fill: #2f6e52; stroke: #b9e0c9; stroke-width: 1.3; stroke-linejoin: round; }
-.country { fill: #2f6e52; stroke: #0c2a33; stroke-width: 0.9; }
-.country.active { fill: #3b8565; }
+.map-panel svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.shelf1 { fill: none; stroke: rgba(173,224,206,0.10); stroke-width: 26; stroke-linejoin: round; }
+.shelf2 { fill: none; stroke: rgba(173,224,206,0.16); stroke-width: 12; stroke-linejoin: round; }
+.island { fill: #2f6e52; stroke: #b9e0c9; stroke-width: 1.3; stroke-linejoin: round; }
+.island.alt { fill: #37795b; }
+.island.gone { fill: #4d5a53; stroke: #a9b6ad; }
 .pin { cursor: pointer; transition: opacity 0.15s; }
-.pin.dim { opacity: 0.12; pointer-events: none; }
+.pin.dim { opacity: 0.14; pointer-events: none; }
 .pin circle.disc { fill: #f7f4ec; stroke-width: 2.4; }
 .pin.inactive-org circle.disc { fill: #cfcaba; stroke-dasharray: 3 2; }
 .pin text.ini { font-family: var(--sans); font-size: 7.5px; font-weight: 700; fill: #2b3640; text-anchor: middle; pointer-events: none; }
+.pin text.pin-label { font-family: var(--sans); font-size: 8px; font-weight: 600; fill: #f1f6f3; text-anchor: middle; paint-order: stroke; stroke: rgba(6,20,26,0.55); stroke-width: 2.4px; stroke-linejoin: round; pointer-events: none; }
 .pin:hover circle.disc, .pin:focus circle.disc { stroke-width: 3.6; }
-.city-pill { pointer-events: none; }
-.city-pill rect { fill: rgba(6,20,26,0.74); stroke: rgba(255,255,255,0.22); stroke-width: 0.8; }
-.city-pill text { font-family: var(--sans); font-size: 10px; font-weight: 600; fill: #eaf3ef; text-anchor: middle; }
+.region-pill { pointer-events: none; }
+.region-pill rect { fill: rgba(6,20,26,0.78); stroke: rgba(255,255,255,0.22); stroke-width: 0.8; }
+.region-pill text { font-family: var(--sans); text-anchor: middle; }
+.region-pill .r-name { font-size: 10.5px; font-weight: 700; fill: #eef5f1; }
+.region-pill .r-sub { font-size: 8px; font-weight: 500; fill: #a9c2bb; }
 .compass { pointer-events: none; }
 .bg-research { background: var(--cat-research); }
 .bg-policy { background: var(--cat-policy); }
@@ -193,31 +182,6 @@ h1 {
 .bg-community { background: var(--cat-community); }
 .bg-career { background: var(--cat-career); }
 .bg-media { background: var(--cat-media); }
-
-/* Regional tray: the "offshore" box for orgs with no single home city */
-.tray {
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  max-width: 330px;
-  background: rgba(8,26,33,0.82);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 12px;
-  padding: 10px 12px 12px;
-  backdrop-filter: blur(4px);
-}
-.tray h2 {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9ab6b0;
-  margin: 0 0 8px;
-  font-weight: 600;
-}
-.tray-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.tray .chip { padding: 3px 9px; font-size: 12.5px; background: rgba(247,244,236,0.08); border-color: rgba(255,255,255,0.16); color: #e8f0ed; }
-.tray .chip:hover { background: rgba(247,244,236,0.16); }
-.tray .chip.dim { opacity: 0.25; }
 
 /* Tooltip */
 .tip {
@@ -248,9 +212,8 @@ h1 {
   margin: 40px 0 14px;
 }
 h2.section {
-  font-family: var(--display);
-  font-weight: 400;
-  font-size: 24px;
+  font-weight: 600;
+  font-size: 18px;
   margin: 0;
 }
 .cards-head .count { color: var(--muted); font-size: 13px; }
@@ -312,7 +275,6 @@ footer {
 footer p { margin: 0 0 6px; }
 
 @media (max-width: 720px) {
-  .tray { position: static; max-width: none; margin: 0; border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
   .controls input[type="search"] { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -324,11 +286,8 @@ footer p { margin: 0 0 6px; }
 
 <div class="wrap">
   <header>
-    <p class="eyebrow">AI safety · Latin America</p>
     <h1>LatAm AI Safety Map</h1>
-    <p class="intro" id="intro-text">Who works on AI safety in Latin America: communities, training and fellowship programs, research groups, and field-building efforts across the region.</p>
-    <p class="intro">Hover a pin for details, or filter the cards below. Modeled on the <a href="https://aisafety.com/map" target="_blank" rel="noopener">AISafety.com field map</a>, which covers the global field.</p>
-    <p class="statline" id="statline"></p>
+    <p class="intro">The organizations, programs, and communities working on AI safety in Latin America.</p>
   </header>
 
   <section class="controls" aria-label="Filters">
@@ -338,11 +297,7 @@ footer p { margin: 0 0 6px; }
   </section>
 
   <section class="map-panel" aria-label="Map">
-    <svg id="map" role="img" aria-label="Map of Latin America with pins for each listed organization"></svg>
-    <div class="tray" id="tray" hidden>
-      <h2>Regional &amp; online</h2>
-      <div class="tray-chips" id="tray-chips"></div>
-    </div>
+    <svg id="map" role="img" aria-label="Illustrated map of the Latin American AI safety field, with one island per category"></svg>
     <div class="tip" id="tip"></div>
   </section>
 
@@ -366,7 +321,6 @@ footer p { margin: 0 0 6px; }
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 "use strict";
 
@@ -392,7 +346,7 @@ function initialsFor(e) {
   return (parts[0] || "?").slice(0, 2).toUpperCase();
 }
 
-// Verified November 2026 against each organization's own public pages. ll is [lat, lon]; ll: null => regional/online tray.
+// Verified November 2026 against each organization's own public pages. ll is [lat, lon] of the home city, null for regional or online groups.
 const DATA = [
   // Research
   { n: "Observatorio de Riesgos Catastróficos Globales (ORCG)", s: "ORCG", cat: "research", country: "Regional", city: null, ll: null, url: "https://www.orcg.info", d: "Policy research network on global catastrophic risks for the Spanish-speaking world. AI risk is a core workstream, with reports on AI governance in Latin America and advocacy for international red lines." },
@@ -408,7 +362,7 @@ const DATA = [
   { n: "ML4Good — LatAm bootcamps", s: "ML4Good", cat: "training", country: "Regional", city: null, ll: null, url: "https://ml4good.org", d: "Free ten-day AI safety bootcamps; editions held in Brazil (2024) and Colombia (2025), open to participants across the region." },
   { n: "AI Safety Collab — Spanish edition", s: "AIS Collab ES", cat: "training", country: "Regional", city: null, ll: null, url: "https://forum.effectivealtruism.org/posts/MwdLumQpcb33JmRY7/enais-ai-safety-collab-2026-winter-spanish-edition", d: "ENAIS's part-time online course on AI safety fundamentals; its first Spanish-language cohort ran in early 2026." },
   { n: "Condor Initiative", s: "Condor", cat: "training", country: "Brazil", city: null, ll: null, url: "https://www.condorinitiative.org", d: "Ran residential camps introducing top Brazilian students to AI safety careers, backed by Open Philanthropy. Wound down by 2026.", status: "inactive" },
-  { n: "AI Futures Fellowship", s: "AI Futures Fellowship", cat: "training", country: "Mexico", city: "Mexico City", ll: [19.43, -99.13], url: "https://aifuturesfellowship.org", d: "Eight-week fellowship on catastrophic AI risks hosted at ITAM, with stipends and mentorship. Last cohort ran in early 2024.", status: "inactive" },
+  { n: "AI Futures Fellowship", s: "AIFF", cat: "training", country: "Mexico", city: "Mexico City", ll: [19.43, -99.13], url: "https://aifuturesfellowship.org", d: "Eight-week fellowship on catastrophic AI risks hosted at ITAM, with stipends and mentorship. Last cohort ran in early 2024.", status: "inactive" },
 
   // Community
   { n: "Buenos Aires AI Safety Hub (BAISH)", s: "BAISH", cat: "community", country: "Argentina", city: "Buenos Aires", ll: [-34.60, -58.38], url: "https://baish.com.ar", d: "The region's largest AI safety community, founded 2024: free technical and governance courses with BlueDot Impact, research sprints, monthly socials, and BAISH Labs." },
@@ -417,7 +371,7 @@ const DATA = [
   { n: "AI Safety Brazil", s: "AIS Brazil", cat: "community", country: "Brazil", city: null, ll: null, url: "https://luma.com/sooo8spc", d: "Community running free monthly online meetups on AI safety and governance, from the UN Global Dialogue to Brazil's AI bill." },
   { n: "ImpactRIO", s: "ImpactRIO", cat: "community", country: "Brazil", city: "Rio de Janeiro", ll: [-22.91, -43.17], url: "https://www.linkedin.com/company/impact-rio", d: "Brazil's first AI safety group, founded 2023: ran alignment and governance fellowships on BlueDot curricula before winding down.", status: "inactive" },
   { n: "CHAIS — Chile AI Safety", s: "CHAIS", cat: "community", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: "https://chais.cl", d: "Early-stage initiative building AI safety as a discipline in Chile, across technical research, governance, and training. Runs a weekly reading group and a resource index; training programs are in design." },
-  { n: "AI Safety Initiative UC Chile", s: "AIS UC Chile", cat: "community", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: null, d: "Student group at UC Chile that ran the country's first AI safety hackathon in 2023; currently dormant.", status: "unclear" },
+  { n: "AI Safety Initiative UC Chile", s: "AIS UC Chile", cat: "community", country: "Chile", city: "Santiago", ll: [-33.45, -70.67], url: null, d: "Student group at UC Chile. Ran the country's first AI safety hackathon in 2023." },
   { n: "LANAIS — Latin American Network for AI Safety", s: "LANAIS", cat: "community", country: "Regional", city: null, ll: null, url: "https://lanais-website.pages.dev", d: "Early-stage network connecting AI safety researchers, students, and organizers across the region, modeled on its European counterpart ENAIS, with a board spanning six countries." },
 
   // Career support
@@ -434,15 +388,6 @@ const FACTS = [
   "<strong>Funding</strong> for the region's safety groups comes almost entirely from outside: Coefficient Giving (formerly Open Philanthropy), EA Funds, Manifund, and Apart Research. No LatAm-based funder of this work was found.",
   "<strong>AI regulation</strong> in the region is moving without a frontier-safety focus: Peru has the first general AI law in force, Brazil's PL 2338 and Chile's risk-based bill are still in committee, and Argentina has gone deregulatory."
 ];
-
-const CITY_LBL_LEFT = new Set(["Santiago", "Guadalajara"]);
-
-const REGION = new Set([
-  "Mexico","Guatemala","Belize","Honduras","El Salvador","Nicaragua","Costa Rica","Panama",
-  "Colombia","Venezuela","Guyana","Suriname","Ecuador","Peru","Brazil","Bolivia","Paraguay",
-  "Chile","Argentina","Uruguay","Cuba","Haiti","Dominican Rep.","Jamaica","Puerto Rico",
-  "Trinidad and Tobago"
-]);
 
 const state = { cat: null, country: "", q: "" };
 const $ = id => document.getElementById(id);
@@ -532,11 +477,11 @@ function showTip(e, el, panel) {
   tip.style.display = "block";
   const pb = panel.getBoundingClientRect();
   const eb = el.getBoundingClientRect();
-  let x = eb.left - pb.left + eb.width / 2 + 12;
+  let x = eb.left - pb.left + panel.scrollLeft + eb.width / 2 + 12;
   let y = eb.top - pb.top - 10;
   const tw = tip.offsetWidth, th = tip.offsetHeight;
-  if (x + tw > pb.width - 10) x = eb.left - pb.left - tw - 12;
-  if (x < 10) x = 10;
+  if (x + tw > panel.scrollLeft + pb.width - 10) x = eb.left - pb.left + panel.scrollLeft - tw - 12;
+  if (x < panel.scrollLeft + 10) x = panel.scrollLeft + 10;
   if (y + th > pb.height - 10) y = pb.height - th - 10;
   if (y < 10) y = 10;
   tip.style.left = x + "px";
@@ -544,30 +489,38 @@ function showTip(e, el, panel) {
 }
 function hideTip() { tip.style.display = "none"; }
 
-function renderTray() {
-  const regional = DATA.map((e, i) => ({ e, i })).filter(x => !x.e.ll);
-  const tray = $("tray");
-  tray.hidden = regional.length === 0;
-  const box = $("tray-chips");
-  box.innerHTML = "";
-  const panel = document.querySelector(".map-panel");
-  for (const { e, i } of regional) {
-    const b = document.createElement("button");
-    b.className = "chip";
-    b.dataset.idx = i;
-    b.innerHTML = '<span class="dot bg-' + e.cat + '"></span>' + (e.s || e.n);
-    b.addEventListener("mouseenter", () => showTip(e, b, panel));
-    b.addEventListener("mouseleave", hideTip);
-    b.addEventListener("focus", () => showTip(e, b, panel));
-    b.addEventListener("blur", hideTip);
-    b.addEventListener("click", () => { hideTip(); jumpToCard(i); });
-    box.appendChild(b);
+// One island per category; wound-down orgs move to the last one.
+const ISLANDS = [
+  { id: "community", name: "Bah\u00eda Comunidad",      sub: "Community",              cx: 250, cy: 190, rx: 158, ry: 100, seed: 11 },
+  { id: "training",  name: "Valle Formaci\u00f3n",      sub: "Training & fellowships", cx: 612, cy: 160, rx: 132, ry: 80,  seed: 23 },
+  { id: "policy",    name: "Cerro Gobernanza",           sub: "Governance",             cx: 135, cy: 428, rx: 92,  ry: 58,  seed: 37 },
+  { id: "research",  name: "Sierra Investigaci\u00f3n", sub: "Research",               cx: 338, cy: 452, rx: 72,  ry: 52,  seed: 41 },
+  { id: "media",     name: "Costa Medios",               sub: "Media & resources",      cx: 512, cy: 420, rx: 92,  ry: 58,  seed: 53 },
+  { id: "career",    name: "Puerto Carreras",            sub: "Career support",         cx: 700, cy: 340, rx: 72,  ry: 50,  seed: 67 },
+  { id: "gone",      name: "Isla Pante\u00f3n",         sub: "No longer active",       cx: 716, cy: 500, rx: 100, ry: 56,  seed: 79 }
+];
+
+function seeded(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function islandPath(isl) {
+  const rand = seeded(isl.seed), pts = [], k = 16;
+  for (let i = 0; i < k; i++) {
+    const a = (i / k) * 2 * Math.PI, f = 0.88 + 0.24 * rand();
+    pts.push([isl.cx + Math.cos(a) * isl.rx * f, isl.cy + Math.sin(a) * isl.ry * f]);
   }
+  return d3.line().curve(d3.curveCatmullRomClosed.alpha(0.8))(pts);
 }
 
 let pinSel = null;
-function drawMap(world) {
-  const W = 840, H = 960;
+function drawMap() {
+  const W = 840, H = 600;
   const svg = d3.select("#map").attr("viewBox", "0 0 " + W + " " + H);
 
   const defs = svg.append("defs");
@@ -578,67 +531,54 @@ function drawMap(world) {
   defs.append("clipPath").attr("id", "pc").append("circle").attr("r", 7);
   svg.append("rect").attr("width", W).attr("height", H).attr("fill", "url(#waves)");
 
-  const geoms = world.objects.countries.geometries.filter(g => REGION.has(g.properties.name));
-  const latam = geoms.map(g => topojson.feature(world, g));
-  const merged = topojson.merge(world, geoms);
-  const proj = d3.geoEqualEarth();
-  proj.fitExtent([[30, 30], [W - 30, H - 30]], { type: "FeatureCollection", features: latam });
-  const path = d3.geoPath(proj);
-  const withEntries = new Set(DATA.map(e => e.country));
+  const paths = ISLANDS.map(islandPath);
+  const gShelf = svg.append("g"), gLand = svg.append("g");
+  paths.forEach(d => gShelf.append("path").attr("class", "shelf1").attr("d", d));
+  paths.forEach(d => gShelf.append("path").attr("class", "shelf2").attr("d", d));
+  ISLANDS.forEach((isl, i) => gLand.append("path")
+    .attr("class", "island" + (isl.id === "gone" ? " gone" : (i % 2 ? " alt" : "")))
+    .attr("d", paths[i]));
 
-  svg.append("path").attr("class", "shelf1").attr("d", path(merged));
-  svg.append("path").attr("class", "shelf2").attr("d", path(merged));
-  svg.append("path").attr("class", "land-base").attr("d", path(merged));
-  svg.append("g").selectAll("path").data(latam).join("path")
-    .attr("class", d => "country" + (withEntries.has(d.properties.name) ? " active" : ""))
-    .attr("d", path);
-
-  const rose = svg.append("g").attr("class", "compass")
-    .attr("transform", "translate(" + (W - 72) + ",78)");
+  const rose = svg.append("g").attr("class", "compass").attr("transform", "translate(62,544)");
   rose.append("circle").attr("r", 27).attr("fill", "none")
     .attr("stroke", "rgba(255,255,255,0.22)").attr("stroke-width", 1);
   const star = "0,-24 4.5,-4.5 24,0 4.5,4.5 0,24 -4.5,4.5 -24,0 -4.5,-4.5";
   rose.append("polygon").attr("points", star).attr("transform", "rotate(45) scale(0.55)")
     .attr("fill", "rgba(255,255,255,0.18)");
   rose.append("polygon").attr("points", star).attr("fill", "rgba(255,255,255,0.38)");
-  rose.append("text").attr("y", -33).attr("text-anchor", "middle")
-    .attr("fill", "rgba(236,244,241,0.75)")
-    .attr("font-size", 11).attr("font-weight", 600).text("N");
 
-  const fan = n => n <= 1 ? 0 : (n === 2 ? 12 : 11 + 2.4 * n);
-  const placed = DATA.map((e, i) => ({ e, i })).filter(x => Array.isArray(x.e.ll));
-  const byCity = d3.group(placed, x => x.e.city + "|" + x.e.country);
-  const panel = document.querySelector(".map-panel");
-  const gLabels = svg.append("g");
-  const gPins = svg.append("g");
-
-  for (const [key, items] of byCity) {
-    const [lat, lon] = items[0].e.ll;
-    const p = proj([lon, lat]);
-    if (!p) continue;
+  // Place each island's pins in centered rows.
+  const placed = DATA.map((e, i) => ({ e, i, isl: e.status === "inactive" ? "gone" : e.cat }));
+  const XSP = 62, YSP = 46;
+  for (const isl of ISLANDS) {
+    const items = placed.filter(x => x.isl === isl.id);
     const n = items.length;
-    const r = fan(n);
+    const perRow = n <= 3 ? n : Math.ceil(n / 2);
+    const rows = Math.ceil(n / perRow);
     items.forEach((x, k) => {
-      const a = (k / n) * 2 * Math.PI - Math.PI / 2;
-      x.cx = p[0] + (n > 1 ? r * Math.cos(a) : 0);
-      x.cy = p[1] + (n > 1 ? r * Math.sin(a) : 0);
+      const row = Math.floor(k / perRow);
+      const m = row === rows - 1 ? n - perRow * (rows - 1) : perRow;
+      const col = k - row * perRow;
+      x.cx = isl.cx + (col - (m - 1) / 2) * XSP;
+      x.cy = isl.cy + (row - (rows - 1) / 2) * YSP - 5;
     });
-    const cityName = items[0].e.city;
-    const left = CITY_LBL_LEFT.has(cityName);
-    const wpx = cityName.length * 5.9 + 14;
-    const xoff = left ? -(r + 16 + wpx) : r + 16;
-    const g = gLabels.append("g").attr("class", "city-pill");
-    g.append("rect").attr("x", p[0] + xoff).attr("y", p[1] - 9)
-      .attr("width", wpx).attr("height", 18).attr("rx", 9);
-    g.append("text").attr("x", p[0] + xoff + wpx / 2).attr("y", p[1] + 3.4).text(cityName);
+
+    const wpx = Math.max(isl.name.length * 6.3, isl.sub.length * 4.8) + 22;
+    const py = isl.cy - isl.ry - 26;
+    const g = svg.append("g").attr("class", "region-pill");
+    g.append("rect").attr("x", isl.cx - wpx / 2).attr("y", py - 15)
+      .attr("width", wpx).attr("height", 30).attr("rx", 10);
+    g.append("text").attr("class", "r-name").attr("x", isl.cx).attr("y", py - 2).text(isl.name);
+    g.append("text").attr("class", "r-sub").attr("x", isl.cx).attr("y", py + 9).text(isl.sub);
   }
 
-  pinSel = gPins.selectAll("g").data(placed).join("g")
+  const panel = document.querySelector(".map-panel");
+  pinSel = svg.append("g").selectAll("g").data(placed).join("g")
     .attr("class", x => "pin" + (x.e.status === "inactive" ? " inactive-org" : ""))
     .attr("transform", x => "translate(" + x.cx + "," + x.cy + ")")
     .attr("tabindex", 0)
     .attr("role", "img")
-    .attr("aria-label", x => x.e.n + ", " + CAT_LABEL[x.e.cat] + ", " + x.e.city + ", " + x.e.country)
+    .attr("aria-label", x => x.e.n + ", " + CAT_LABEL[x.e.cat] + ", " + (x.e.city ? x.e.city + ", " : "") + x.e.country)
     .on("mouseenter", function (ev, x) { showTip(x.e, this, panel); })
     .on("mouseleave", hideTip)
     .on("focus", function (ev, x) { showTip(x.e, this, panel); })
@@ -658,20 +598,15 @@ function drawMap(world) {
     } else {
       g.append("text").attr("class", "ini").attr("y", 2.6).text(initialsFor(x.e));
     }
+    g.append("text").attr("class", "pin-label").attr("y", 21).text(x.e.s || x.e.n);
   });
 }
 
 function updateMapDim() {
   if (pinSel) pinSel.classed("dim", x => !entryMatches(x.e));
-  document.querySelectorAll("#tray-chips .chip").forEach(ch => {
-    ch.classList.toggle("dim", !entryMatches(DATA[+ch.dataset.idx]));
-  });
 }
 
 function update() {
-  const nc = new Set(DATA.filter(e => e.country !== "Regional").map(e => e.country)).size;
-  $("statline").innerHTML = "<strong>" + DATA.length + "</strong> listings · <strong>" +
-    nc + "</strong> countries · compiled 26 November 2026";
   renderChips();
   renderCards();
   updateMapDim();
@@ -700,15 +635,10 @@ function init() {
     "<p>Format borrowed, with admiration, from the <a href='https://aisafety.com/map' target='_blank' rel='noopener'>AISafety.com field map</a>. This page is independent and not affiliated with AISafety.com.</p>" +
     "<p>Compiled in November 2026 from each organization's own public pages, legislative trackers, and the June 2026 EA Forum mapping of the LatAm AI safety ecosystem. Descriptions paraphrase what the organizations say they do; inclusion is not endorsement. If something is missing, wrong, or defunct, it needs a correction.</p>";
 
-  renderTray();
   update();
 
-  fetch("countries-110m.json")
-    .then(r => r.json())
-    .then(world => { drawMap(world); updateMapDim(); })
-    .catch(() => {
-      document.querySelector(".map-panel").style.display = "none";
-    });
+  try { drawMap(); updateMapDim(); }
+  catch (_) { document.querySelector(".map-panel").style.display = "none"; }
 }
 init();
 </script>

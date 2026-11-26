@@ -1,13 +1,12 @@
 # LatAm AI Safety Map
 
-A map of the AI safety ecosystem in Latin America: communities, training programs, research groups, and field-building efforts. The scope is AI safety proper; general AI policy institutions are out of scope.
+A field map of the AI safety ecosystem in Latin America. Each island on the map is one category: community, training, governance, research, career support, and media. The scope is AI safety proper; general AI policy institutions are out of scope.
 
 The format follows the [AISafety.com field map](https://aisafety.com/map). This project is not affiliated with AISafety.com.
 
 ## Files
 
-- `public/index.html` renders the map and the card directory. It loads D3 and TopoJSON from cdnjs.
-- `public/countries-110m.json` holds the country geometry (world-atlas 2.0.2). The page fetches it with a relative URL.
+- `public/index.html` renders the map and the card directory. It loads D3 from cdnjs.
 - `public/icons/` holds the organization favicons shown in the map pins.
 - `wrangler.jsonc` deploys `public/` to Cloudflare Workers at map.chais.cl (`npx wrangler deploy`).
 
@@ -19,8 +18,6 @@ Serve the `public/` folder, then open http://localhost:8000:
 python3 -m http.server --directory public
 ```
 
-A direct `file://` open does not work because the page fetches the geometry file.
-
 ## Data
 
-The entries were compiled on 26 November 2026 from each organization's public pages, legislative trackers, and the June 2026 EA Forum mapping of the LatAm AI safety ecosystem. The data lives in the `DATA` array in `public/index.html`. To add or correct an entry, edit that array.
+The entries were compiled on 26 November 2026 from each organization's public pages, and the June 2026 EA Forum mapping of the LatAm AI safety ecosystem. The data lives in the `DATA` array in `public/index.html`. To add or correct an entry, edit that array.

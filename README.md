@@ -1,14 +1,24 @@
 # LatAm AI Safety Map
 
-A field map of the AI safety ecosystem in Latin America. Each island on the map is one category: community, training, governance, research, career support, and media. The scope is AI safety proper; general AI policy institutions are out of scope.
+A field map of the organizations, programs, and communities that work on AI safety in Latin America. The map is an illustrated island. Each region of the island is one category.
+
+Live at [map.chais.cl](https://map.chais.cl).
 
 The format follows the [AISafety.com field map](https://aisafety.com/map). This project is not affiliated with AISafety.com.
 
 ## Files
 
-- `public/index.html` renders the map and the card directory. It loads D3 from cdnjs.
-- `public/icons/` holds the organization favicons shown in the map pins.
-- `wrangler.jsonc` deploys `public/` to Cloudflare Workers at map.chais.cl (`npx wrangler deploy`).
+- `public/index.html` is the page.
+- `public/data.js` holds the categories and the organizations.
+- `public/map.js` draws the island and the pins with D3.
+- `public/app.js` renders the cards and connects the filters to the map.
+- `public/styles.css` holds the styles.
+- `public/icons/` holds the organization logos shown on the pins.
+- `wrangler.jsonc` configures the deploy to Cloudflare Workers.
+
+## Edit the data
+
+Add or correct an organization in the `ORGS` array in `public/data.js`. Set `status: "inactive"` to move an organization to the graveyard islet.
 
 ## Run locally
 
@@ -18,6 +28,8 @@ Serve the `public/` folder, then open http://localhost:8000:
 python3 -m http.server --directory public
 ```
 
-## Data
+## Deploy
 
-The entries were compiled on 26 November 2026 from each organization's public pages, and the June 2026 EA Forum mapping of the LatAm AI safety ecosystem. The data lives in the `DATA` array in `public/index.html`. To add or correct an entry, edit that array.
+```bash
+npx wrangler deploy
+```
